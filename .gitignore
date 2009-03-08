@@ -1,0 +1,3 @@
+src/*.egg-info/*
+*.pyc
+trac-test/*
