@@ -35,7 +35,7 @@ re_email = re.compile(
     , re.VERBOSE | re.IGNORECASE)
 
 re_general = re.compile(
-    r"""[^-_\!"£\$%\^&\*\(\)\+=\{\}\[\]:;'@~#\|\\,./<>\?a-z0-9\s ]+""",
+    r"""[^-_\!"\$%\^&\*\(\)\+=\{\}\[\]:;'@~#\|\\,./<>\?a-z0-9\s ]+""",
     re.IGNORECASE)
 
 def validate_url(url):
