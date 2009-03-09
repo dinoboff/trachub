@@ -4,29 +4,51 @@ Created on 8 Mar 2009
 @author: damien
 """
 from datetime import datetime
-import time
 
 from trac.core import implements, Component
 from trac.timeline.api import ITimelineEventProvider
-from trac.db.schema import Table, Column, Index
-from trac.db.api import DatabaseManager
 from trac.config import Option
 from trac.util.datefmt import utc, to_timestamp
 
-from post_parser import IGitHubPostObservers
+from trac_hub.post_parser import IGitHubPostObservers, GitHubPostError
 
-
-
-schema = [
-    Table('github_revisions', key='rev')[
-        Column('rev'),
-        Column('url'),
-        Column('clone', type='int'),
-        Column('time', type='int'),
-        Column('author'),
-        Column('message'),
-        Index(['time'])]
-    ]
+class GitHubEvent(object):
+    
+    def __init__(self, env, conf, *args, **kw):
+        self.env = env
+        self.conf = conf
+        self.db = self.env.get_db_cnx()
+        self.id = kw.get('id')
+        self.url = kw.get('url')
+        self._author = kw.get('author')
+        self.message = kw.get['message']
+        
+    def is_clone(self):
+        github_url = self.conf.get('trac-hub').get('github-url')
+        if not github_url:
+            raise GitHubPostError('github-url option is not set')
+        return self.url.startswith(github_url)
+    
+    @property
+    def author(self):
+        try:
+            return '%(name)s < %(email)s >' % self._author
+        except (TypeError, KeyError):
+            return self._author
+    
+    def save(self):
+        cursor = self.db.cursor()
+        sql = """INSERT INTO github_revisions
+        (rev, url, clone, time, author, message)
+        VALUES(%s, %s, %s, %s, %s, %s)"""
+        cursor.execute(sql, (
+            self.id,
+            self.url,
+            self.is_clone(),
+            to_timestamp(datetime.now(utc)),
+            self.author,
+            self.message,))
+        self.db.commit()
 
 
 class GitHubEventProvider(Component):
@@ -36,49 +58,19 @@ class GitHubEventProvider(Component):
     """
     implements(IGitHubPostObservers, ITimelineEventProvider)
     
-    git_hub_url = Option('trachub', 'git_hub_url', '',
+    github_url = Option('trachub', 'github-url', '',
         doc="""Your main GitHub repository (like http://github.com/username/projectname).""")
-
-    def __init__(self):
-        # Far too hackish! FIXME 
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        try:
-            cursor.execute("select count(*) from github_revisions")
-            db.commit()
-        except:
-            self.log.debug('installing GitHub event schema.')
-            connector, args = DatabaseManager(self.env)._get_connector()
-            for table in schema:
-                for stmt in connector.to_sql(table):
-                    self.log.debug('Will execute: %s' % stmt)
-                    cursor.execute(stmt)
-            db.commit()
 
         
     def process_commit(self, post_data, commit_data):
         """
         Save commit into the database
         """
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        sql = "INSERT INTO github_revisions (rev, url, clone, time, author, message) VALUES(?,?,?,?,?,?)"
-        args = (
-            commit_data['id'],
-            commit_data['url'],
-            int(commit_data['url'].startswith(self.git_hub_url)),
-            to_timestamp(datetime.now(utc)),
-            '%(name)s < %(email)s >' % commit_data['author'],
-            commit_data['message'],
-            )
-        self.log.debug('%s (%i)' % (args, len(args),))
         try:
-            cursor.execute(
-                "INSERT INTO github_revisions (rev, url, clone, time, author, message) VALUES(%s, %s, %s, %s, %s, %s)",
-                args)
-            db.commit()
+            event = GitHubEvent(self.env, self.conf, **commit_data)
+            event.save()
         except:
-            raise ValueError('This commit (%s) were already saved' % commit_data['id'])
+            raise GitHubPostError('This commit (%s) were already saved' % commit_data['id'])
         
     def get_timeline_filters(self, req):
         """
