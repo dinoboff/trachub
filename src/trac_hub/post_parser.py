@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Created on 8 Mar 2009
 
@@ -92,8 +93,8 @@ class GitHubPostParser(Component):
                 for observer in self.observers:
                     observer.process_commit(json_data, commit_data)
         except (GitHubPostError), e:
-            self.env.log.error('Invalid data (%s).' % str(e))
-            msg = 'Invalid data.'
+            self.env.log.error('An error occurred: %s' % str(e))
+            msg = 'An error occurred: %s' % str(e)
             status = 404
         req.send(msg, content_type='text/plain', status=status)
         
