@@ -11,44 +11,72 @@ from trac.config import Option
 from trac.util.datefmt import utc, to_timestamp
 
 from trac_hub.post_parser import IGitHubPostObservers, GitHubPostError
+from trac.resource import Resource
+from genshi.builder import tag
+from trac.wiki.formatter import format_to
 
 class GitHubEvent(object):
     
-    def __init__(self, env, conf, *args, **kw):
+    def __init__(self, env, config, **kw):
         self.env = env
-        self.conf = conf
+        self.config = config
         self.db = self.env.get_db_cnx()
-        self.id = kw.get('id')
+        self.rev = kw.get('id')
         self.url = kw.get('url')
-        self._author = kw.get('author')
-        self.message = kw.get['message']
+        self.time = kw.get('time')
+        self.name = kw.get('author', {}).get('name')
+        self.email = kw.get('author', {}).get('email')
+        self.message = kw.get('message')
         
     def is_clone(self):
-        github_url = self.conf.get('trac-hub').get('github-url')
+        github_url = self.config.get('trachub', 'github_url', '')
         if not github_url:
-            raise GitHubPostError('github-url option is not set')
+            return True
         return self.url.startswith(github_url)
     
     @property
     def author(self):
         try:
-            return '%(name)s < %(email)s >' % self._author
+            return '%s <%s>' % (self.name, self.email,)
         except (TypeError, KeyError):
             return self._author
     
     def save(self):
         cursor = self.db.cursor()
         sql = """INSERT INTO github_revisions
-        (rev, url, clone, time, author, message)
+        (rev, url, time, name, email, message)
         VALUES(%s, %s, %s, %s, %s, %s)"""
         cursor.execute(sql, (
-            self.id,
+            self.rev,
             self.url,
-            self.is_clone(),
             to_timestamp(datetime.now(utc)),
-            self.author,
+            self.name,
+            self.email,
             self.message,))
         self.db.commit()
+    
+    @classmethod
+    def get_event_date(cls, env, config, start, stop):
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        sql = """SELECT rev, url, time, name, email, message
+        FROM github_revisions
+        WHERE time>=%s AND time<=%s"""
+        cursor.execute(sql, (to_timestamp(start), to_timestamp(stop),))
+        for rev, url, time, name, email, message in cursor:
+            event =  cls(env,config, id=rev, url=url, time=time, message=message)
+            event.name = name
+            event.email = email
+            yield event
+            
+    
+    def __repr__(self):
+        return """< GitHubEvent(%s, %s, %s) >""" % (self.env, self.config,
+            {
+                'id': self.rev, 'url': self.url,
+                'author': {'name':self.name, 'email': self.email},
+                'message': self.message
+            })
 
 
 class GitHubEventProvider(Component):
@@ -58,7 +86,7 @@ class GitHubEventProvider(Component):
     """
     implements(IGitHubPostObservers, ITimelineEventProvider)
     
-    github_url = Option('trachub', 'github-url', '',
+    github_url = Option('trachub', 'github_url', '',
         doc="""Your main GitHub repository (like http://github.com/username/projectname).""")
 
         
@@ -67,21 +95,24 @@ class GitHubEventProvider(Component):
         Save commit into the database
         """
         try:
-            event = GitHubEvent(self.env, self.conf, **commit_data)
+            kw = dict()
+            for x in commit_data:
+                kw[str(x)] = commit_data[x]
+            event = GitHubEvent(self.env, self.config, **kw)
+            self.log.debug("Saving event: %s" % event)
             event.save()
-        except:
-            raise GitHubPostError('This commit (%s) were already saved' % commit_data['id'])
+        except Exception, e:
+            raise GitHubPostError('Could not save event: %s' % str(e))
         
     def get_timeline_filters(self, req):
         """
         Return a list of filters that this provider support: commits for the main repository
         and commits from its clones.
         """
-        if 'CHANGESET_VIEW' in req.perm:
-            return (
-                ('main_git_repository','Main repository commits'),
-                ('cloned_git_repository','Cloned repository commits'),
-                )
+        return (
+            ('main_git_repository','Main repository commits'),
+            ('cloned_git_repository','Cloned repository commits'),
+            )
 
     def get_timeline_events(self, req, start, stop, filters):
         """
@@ -101,7 +132,20 @@ class GitHubEventProvider(Component):
         the tuple can also specify explicitly the provider by returning tuples
         of the following form: `(kind, date, author, data, provider)`.
         """
-        return ()
+        if 'main_git_repository' in filters or \
+            'cloned_git_repository' in filters:
+            for event in GitHubEvent.get_event_date(self.env, self.config, start, stop):
+                if event.is_clone() and 'cloned_git_repository' in filters:
+                    yield ('cloned_git_repository',
+                        datetime.fromtimestamp(event.time, utc),
+                        event.author,
+                        event)
+                elif not event.is_clone() and 'main_git_repository' in filters:
+                    yield ('main_git_repository',
+                        datetime.fromtimestamp(event.time, utc),
+                        event.author,
+                        event) # TODO: only sent data needed
+
 
     def render_timeline_event(self, context, field, event):
         """
@@ -114,4 +158,11 @@ class GitHubEventProvider(Component):
                       the 'url'
         :param event: the event tuple, as returned by `get_timeline_events`
         """
-        
+        # TODO Econde output (how do you use context?)
+        ghevent = event[3]
+        if field == 'url':
+            return ghevent.url # TODO Econde output (how do you use context?)
+        elif field == 'title':
+            return tag('Revision ', tag.em(ghevent.rev))
+        elif field == 'description':
+            return tag(ghevent.message)

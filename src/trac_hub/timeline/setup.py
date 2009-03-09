@@ -13,12 +13,12 @@ db_version = 1
 
 # Database schema
 schema = [
-    Table('github_revisions', key='rev')[
-        Column('rev'),
+    Table('github_revisions', key='url')[
         Column('url'),
-        Column('clone', type='int'),
+        Column('rev'),
         Column('time', type='int'),
-        Column('author'),
+        Column('name'),
+        Column('email'),
         Column('message'),
         Index(['time'])]
     ]
