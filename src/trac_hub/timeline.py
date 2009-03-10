@@ -13,6 +13,7 @@ from genshi.builder import tag
 
 from trac_hub.model import GitHubCommit as GitHubEvent
 
+__all__ = ['GitHubEventProvider']
 
 class GitHubEventProvider(Component):
     """
