@@ -4,8 +4,52 @@ Created on 10 Mar 2009
 @author: damien
 """
 from datetime import datetime
+import simplejson
+import re
 
 from trac.util.datefmt import to_timestamp, utc
+
+re_url = re.compile(r"""^
+    (# Scheme
+     (https?|git):
+     (# Authority & path
+      //
+      ([a-z0-9\-._~%!$&'()*+,;=]+@)?              # User
+      ([a-z0-9\-._~%]+                            # Named host
+      |\[[a-f0-9:.]+\]                            # IPv6 host
+      |\[v[a-f0-9][a-z0-9\-._~%!$&'()*+,;=:]+\])  # IPvFuture host
+      (:[0-9]+)?                                  # Port
+      (/[a-z0-9\-._~%!$&'()*+,;=:@]+)*/?          # Path
+     )
+    )
+    # Query
+    (\?[a-z0-9\-._~%!$&'()*+,;=:@/?]*)?
+    # Fragment
+    (\#[a-z0-9\-._~%!$&'()*+,;=:@/?]*)?
+    $""", re.VERBOSE | re.IGNORECASE)
+
+re_email = re.compile(
+    r"""
+    [a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*
+    @(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"""
+    , re.VERBOSE | re.IGNORECASE)
+
+re_general = re.compile(
+    r"""[^-_\!"\$%\^&\*\(\)\+=\{\}\[\]:;'@~#\|\\,./<>\?a-z0-9\s ]+""",
+    re.IGNORECASE)
+
+def validate_url(url):
+    return bool(re_url.match(url))
+
+def validate_email(email):
+    return bool(re_email.match(email))
+
+def filter(field):
+    return re_general.sub('', field)
+
+
+class GitHubCommitException:
+    pass
 
 
 class GitHubCommit(object):
@@ -65,13 +109,59 @@ class GitHubCommit(object):
         sql = """SELECT id, url, time, name, email, message
         FROM github_revisions
         WHERE time>=%s AND time<=%s"""
-        cursor.execute(sql, (to_timestamp(start), to_timestamp(stop),))
+        cursor.execute(sql, (start, stop,))
         for id, url, time, name, email, message in cursor:
             event =  cls(env,git_url=git_url, id=id, url=url, time=time, message=message)
             event.name = name
             event.email = email
             yield event
             
+    @classmethod
+    def create_from_json(cls, env, json, git_url='', db=None):
+        try:
+            fields = simplejson.loads(json)
+        except(ValueError, TypeError), e:
+            raise GitHubCommitException(
+                'Wrong json syntax (%s) in: %s' % (str(e), json,))
+        
+        cls.filter_fields(fields)
+        for commit_data in fields.get('commits'):
+            try:
+                commit = GitHubCommit(env, git_url=git_url, db=db, **commit_data)
+                commit.save()
+                yield commit
+            except Exception, e:
+                raise GitHubCommitException('Could not save commit: %s' % str(e))
+    
+    
+    @classmethod
+    def filter_fields(cls, fields):
+        
+        # convert unicode keys to string
+        for field in fields:
+            value = fields[field]
+            del fields[field]
+            fields[str(field)] = value
+        
+        # validate
+        for field in fields:
+            if field in ('owner','author','repository'):
+                cls.filter_fields(fields[field])
+            elif field == 'commits':
+                for commit in fields[field]:
+                    cls.filter_fields(commit)                    
+            elif field == 'email':
+                if not validate_email(fields[field]):
+                    fields[field] = None
+                    
+            elif field == 'url':
+                if not validate_url(fields[field]):
+                    fields[field] = None
+            else:
+                try:
+                    fields[field] = filter(fields[field])
+                except:
+                    fields[field] = None
     
     def __repr__(self):
         return """<GitHubEvent(%r, git_url=%r,

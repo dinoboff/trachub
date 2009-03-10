@@ -8,7 +8,7 @@ from datetime import datetime
 from trac.core import implements, Component
 from trac.timeline.api import ITimelineEventProvider
 from trac.config import Option
-from trac.util.datefmt import utc
+from trac.util.datefmt import utc, to_timestamp
 from genshi.builder import tag
 
 from trac_hub.model import GitHubCommit as GitHubEvent
@@ -55,7 +55,9 @@ class GitHubEventProvider(Component):
         """
         if 'main_git_repository' in filters or \
             'cloned_git_repository' in filters:
-            for event in GitHubEvent.get_commit_by_date(self.env, self.config, start, stop):
+            for event in GitHubEvent.get_commit_by_date(
+                self.env, to_timestamp(start), to_timestamp(stop), git_url=self.github_url):
+                
                 if event.is_clone() and 'cloned_git_repository' in filters:
                     yield ('cloned_git_repository',
                         datetime.fromtimestamp(event.time, utc),
