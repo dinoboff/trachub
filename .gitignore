@@ -2,3 +2,5 @@ src/*.egg-info/*
 *.pyc
 trac-test/*
 trac-trunk/*
+build/*
+dist/*
