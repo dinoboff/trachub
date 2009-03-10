@@ -19,6 +19,7 @@ setup(
 
     install_requires = [
         'simplejson>=2.0.5',
+        'nose'
     ],
     entry_points = {
         'trac.plugins': [
