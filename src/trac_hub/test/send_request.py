@@ -3,6 +3,7 @@ Created on 8 Mar 2009
 
 @author: damien
 '''
+import simplejson
 
 import urllib
 
@@ -48,6 +49,9 @@ data = """{
 }
 """
 
+def parse_json():
+    return simplejson.loads(data)
+
 def post_commits():
     params = urllib.urlencode({'payload': data})
     f = urllib.urlopen("http://localhost:8000/trac-test/github", params)
@@ -55,4 +59,5 @@ def post_commits():
 
 
 if __name__ == '__main__':
-    post_commits()
+    #post_commits()
+    print parse_json()

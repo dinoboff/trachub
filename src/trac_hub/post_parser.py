@@ -4,6 +4,7 @@ Created on 8 Mar 2009
 
 @author: damien lebrun
 """
+from trac_hub.model import GitHubCommit
 import re
 
 from trac.core import Interface, Component, ExtensionPoint, implements
@@ -54,9 +55,14 @@ class GitHubPostError(Exception):
 
 class IGitHubPostObservers(Interface):
     
-    def process_commit(post_data, commit_data): #@NoSelf
-        """Called when some commits are pushed to your project
-        or one of its clone (called for each commit)."""
+    def process_commit(commit, post_data): #@NoSelf
+        """
+        Called when some commits are pushed to your project
+        or one of its clone (called for each commit):
+        
+        * "commit" is a GitHubCommit instance.
+        * post_data is a dictionary containing the data sent by github.
+        """
 
 
 class GitHubPostParser(Component):
@@ -85,14 +91,24 @@ class GitHubPostParser(Component):
         """Parse Github post and call all components implementing IGitHubPostObservers."""
         msg = 'ok'
         status = 200
+        db = self.env.get_db_cnx()
         try:
             data = req.args.get('payload')
             json_data = self.validate_payload(data)
             for commit_data in json_data.get('commits'):
-                self.env.log.debug("Calling observer(s) for commit: %s" % commit_data)
+                try:
+                    commit = GitHubCommit(self.env, self.config, db=db, **commit_data)
+                    self.log.debug("Saving commit: %s" % commit)
+                    commit.save()
+                except Exception, e:
+                    raise GitHubPostError('Could not save commit: %s' % str(e))
+                
+                self.env.log.debug("Calling observer(s) for commit: %s" % commit.url)
                 for observer in self.observers:
-                    observer.process_commit(json_data, commit_data)
+                    observer.process_commit(commit, json_data)
+                
         except (GitHubPostError), e:
+            db.rollback()
             self.env.log.error('An error occurred: %s' % str(e))
             msg = 'An error occurred: %s' % str(e)
             status = 404
@@ -111,6 +127,13 @@ class GitHubPostParser(Component):
         return json_data
     
     def validate_fields(self, fields):
+        # convert unicode keys to string
+        for field in fields:
+            value = fields[field]
+            del fields[field]
+            fields[str(field)] = value
+        
+        # validate
         for field in fields:
             if field in ('owner','author','repository'):
                 self.validate_fields(fields[field])
@@ -119,18 +142,19 @@ class GitHubPostParser(Component):
                     self.validate_fields(commit)                    
             elif field == 'email':
                 if not validate_email(fields[field]):
-                    raise GitHubPostError(
-                        '%s is not valid' % fields[field])
+                    fields[field] = None
+                    
             elif field == 'url':
                 if not validate_url(fields[field]):
-                    raise GitHubPostError(
-                        '%s is not url' % fields[field])
+                    fields[field] = None
             else:
                 try:
                     fields[field] = filter(fields[field])
                 except:
                     fields[field] = None
                     
-        #TODO: validate required fields
+        #TODO: check required fields
+        
+        #TODO: check project name
 
 

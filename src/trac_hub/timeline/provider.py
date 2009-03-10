@@ -8,75 +8,10 @@ from datetime import datetime
 from trac.core import implements, Component
 from trac.timeline.api import ITimelineEventProvider
 from trac.config import Option
-from trac.util.datefmt import utc, to_timestamp
-
-from trac_hub.post_parser import IGitHubPostObservers, GitHubPostError
-from trac.resource import Resource
+from trac.util.datefmt import utc
 from genshi.builder import tag
-from trac.wiki.formatter import format_to
 
-class GitHubEvent(object):
-    
-    def __init__(self, env, config, **kw):
-        self.env = env
-        self.config = config
-        self.db = self.env.get_db_cnx()
-        self.rev = kw.get('id')
-        self.url = kw.get('url')
-        self.time = kw.get('time')
-        self.name = kw.get('author', {}).get('name')
-        self.email = kw.get('author', {}).get('email')
-        self.message = kw.get('message')
-        
-    def is_clone(self):
-        github_url = self.config.get('trachub', 'github_url', '')
-        if not github_url:
-            return True
-        return self.url.startswith(github_url)
-    
-    @property
-    def author(self):
-        try:
-            return '%s <%s>' % (self.name, self.email,)
-        except (TypeError, KeyError):
-            return self._author
-    
-    def save(self):
-        cursor = self.db.cursor()
-        sql = """INSERT INTO github_revisions
-        (rev, url, time, name, email, message)
-        VALUES(%s, %s, %s, %s, %s, %s)"""
-        cursor.execute(sql, (
-            self.rev,
-            self.url,
-            to_timestamp(datetime.now(utc)),
-            self.name,
-            self.email,
-            self.message,))
-        self.db.commit()
-    
-    @classmethod
-    def get_event_date(cls, env, config, start, stop):
-        db = env.get_db_cnx()
-        cursor = db.cursor()
-        sql = """SELECT rev, url, time, name, email, message
-        FROM github_revisions
-        WHERE time>=%s AND time<=%s"""
-        cursor.execute(sql, (to_timestamp(start), to_timestamp(stop),))
-        for rev, url, time, name, email, message in cursor:
-            event =  cls(env,config, id=rev, url=url, time=time, message=message)
-            event.name = name
-            event.email = email
-            yield event
-            
-    
-    def __repr__(self):
-        return """< GitHubEvent(%s, %s, %s) >""" % (self.env, self.config,
-            {
-                'id': self.rev, 'url': self.url,
-                'author': {'name':self.name, 'email': self.email},
-                'message': self.message
-            })
+from trac_hub.model import GitHubCommit as GitHubEvent
 
 
 class GitHubEventProvider(Component):
@@ -84,25 +19,11 @@ class GitHubEventProvider(Component):
     Save new commits event to the database
     and provide GitHub event to Trac's time line
     """
-    implements(IGitHubPostObservers, ITimelineEventProvider)
+    implements(ITimelineEventProvider)
     
     github_url = Option('trachub', 'github_url', '',
         doc="""Your main GitHub repository (like http://github.com/username/projectname).""")
 
-        
-    def process_commit(self, post_data, commit_data):
-        """
-        Save commit into the database
-        """
-        try:
-            kw = dict()
-            for x in commit_data:
-                kw[str(x)] = commit_data[x]
-            event = GitHubEvent(self.env, self.config, **kw)
-            self.log.debug("Saving event: %s" % event)
-            event.save()
-        except Exception, e:
-            raise GitHubPostError('Could not save event: %s' % str(e))
         
     def get_timeline_filters(self, req):
         """
@@ -134,7 +55,7 @@ class GitHubEventProvider(Component):
         """
         if 'main_git_repository' in filters or \
             'cloned_git_repository' in filters:
-            for event in GitHubEvent.get_event_date(self.env, self.config, start, stop):
+            for event in GitHubEvent.get_commit_by_date(self.env, self.config, start, stop):
                 if event.is_clone() and 'cloned_git_repository' in filters:
                     yield ('cloned_git_repository',
                         datetime.fromtimestamp(event.time, utc),
@@ -144,7 +65,7 @@ class GitHubEventProvider(Component):
                     yield ('main_git_repository',
                         datetime.fromtimestamp(event.time, utc),
                         event.author,
-                        event) # TODO: only sent data needed
+                        event) # TODO: only sent needed data
 
 
     def render_timeline_event(self, context, field, event):
@@ -158,11 +79,11 @@ class GitHubEventProvider(Component):
                       the 'url'
         :param event: the event tuple, as returned by `get_timeline_events`
         """
-        # TODO Econde output (how do you use context?)
+        # TODO how do you use context
         ghevent = event[3]
         if field == 'url':
             return ghevent.url # TODO Econde output (how do you use context?)
         elif field == 'title':
-            return tag('Revision ', tag.em(ghevent.rev))
+            return tag('Revision ', tag.em(ghevent.id))
         elif field == 'description':
             return tag(ghevent.message)

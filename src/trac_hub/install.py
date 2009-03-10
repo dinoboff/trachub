@@ -15,7 +15,7 @@ db_version = 1
 schema = [
     Table('github_revisions', key='url')[
         Column('url'),
-        Column('rev'),
+        Column('id'),
         Column('time', type='int'),
         Column('name'),
         Column('email'),
@@ -41,7 +41,7 @@ def create_tables(cursor, env):
     cursor.execute("INSERT into system values ('trachub_infotext', '')")
 
 
-class GitHubEventSetup(Component):
+class TracHubSetup(Component):
     """
     Setup and upgrade tables require for GitHub events.
     
