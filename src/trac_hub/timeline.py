@@ -12,6 +12,8 @@ from trac.util.datefmt import utc, to_timestamp
 from genshi.builder import tag
 
 from trac_hub.model import GitHubCommit as GitHubEvent
+from trac.util import html
+from cgi import escape
 
 __all__ = ['GitHubEventProvider']
 
@@ -56,6 +58,7 @@ class GitHubEventProvider(Component):
         """
         if 'main_git_repository' in filters or \
             'cloned_git_repository' in filters:
+            
             for event in GitHubEvent.get_commit_by_date(
                 self.env, to_timestamp(start), to_timestamp(stop), git_url=self.github_url):
                 
@@ -82,10 +85,9 @@ class GitHubEventProvider(Component):
                       the 'url'
         :param event: the event tuple, as returned by `get_timeline_events`
         """
-        # TODO how do you use context
         ghevent = event[3]
         if field == 'url':
-            return ghevent.url # TODO Econde output (how do you use context?)
+            return tag(ghevent.url) # TODO find out how do you use context
         elif field == 'title':
             return tag('Revision ', tag.em(ghevent.id))
         elif field == 'description':
