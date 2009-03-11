@@ -48,7 +48,7 @@ def filter(field):
     return re_general.sub('', field)
 
 
-class GitHubCommitException:
+class GitHubCommitException(Exception):
     pass
 
 
