@@ -12,8 +12,6 @@ from trac.util.datefmt import utc, to_timestamp
 from genshi.builder import tag
 
 from trac_hub.model import GitHubCommit as GitHubEvent
-from trac.util import html
-from cgi import escape
 
 __all__ = ['GitHubEventProvider']
 
