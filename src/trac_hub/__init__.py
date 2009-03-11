@@ -1,3 +1,3 @@
 from install import TracHubSetup
-from post_parser import GitHubPostParser, IGitHubPostObservers
+from post_parser import GitHubPostParser, IGitHubPostObserver
 from timeline import GitHubEventProvider

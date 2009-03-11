@@ -15,7 +15,7 @@ class GitHubPostError(Exception):
     pass
 
 
-class IGitHubPostObservers(Interface):
+class IGitHubPostObserver(Interface):
     
     def process_commit(commit): #@NoSelf
         """
@@ -30,12 +30,12 @@ class GitHubPostParser(Component):
     """
     It parses data sent by GitHub on a post-receive.
     
-    It doesn't do anything with it but let extensions that implement trac_hub.IGitHubPostObservers
+    It doesn't do anything with it but let extensions that implement trac_hub.IGitHubPostObserver
     process the commit data.
     """
 
     implements(IRequestHandler)
-    observers = ExtensionPoint(IGitHubPostObservers)
+    observers = ExtensionPoint(IGitHubPostObserver)
     github_url = Option('trachub', 'github_url', '',
         doc="""Your main GitHub repository (like http://github.com/username/projectname).""")
     
@@ -45,7 +45,6 @@ class GitHubPostParser(Component):
         """
         serve = req.path_info.rstrip('/') == '/github' and req.method == 'POST'
         if serve:
-            self.processHook = True
             # Hack from GitHubPlugin to bypass a CSRF protection I am guessing.
             req.form_token = None
  
@@ -54,7 +53,7 @@ class GitHubPostParser(Component):
         
     def process_request(self, req):
         """
-        Parse Github post and call all components implementing IGitHubPostObservers.
+        Parse Github post and call all components implementing IGitHubPostObserver.
         """
         msg = 'ok'
         status = 200
