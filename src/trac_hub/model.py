@@ -38,6 +38,19 @@ re_general = re.compile(
     r"""[^-_\!"\$%\^&\*\(\)\+=\{\}\[\]:;'@~#\|\\,./<>\?a-z0-9\s ]+""",
     re.IGNORECASE)
 
+re_message_parser = re.compile(
+    r"""(
+      fix(?:e(?:d|s)?)?|
+      ref?\.?
+
+    )?\:?\s+(
+      (?:(?:issues?\s+|\#|i)\d+)
+      (?:\s*(?:,|&|and)\s+(?:\#?\d+))*
+    )""", 
+    re.IGNORECASE | re.VERBOSE)
+
+re_int = re.compile(r"(\d+)")
+
 def validate_url(url):
     return bool(re_url.match(url))
 
@@ -53,6 +66,19 @@ class GitHubCommitException(Exception):
 
 
 class GitHubCommit(object):
+    
+    default_action = 'ref'    
+    commit_action = {
+        '':     'ref',
+        'ref':  'ref',
+        're':   'ref',
+        'ref.':  'ref',
+        're.':   'ref',
+        'fix':  'fixes',
+        'fixe': 'fixes', # I know
+        'fixes':'fixes',
+        'fixed':'fixes'
+        }
     
     def __init__(self, env, git_url=None, **kw):
         self.env = env
@@ -101,7 +127,22 @@ class GitHubCommit(object):
             self.email,
             self.message,))
         commit()
-    
+            
+    def parse_message(self):
+        """
+        Parse the commit message ticket relative information.
+        
+        Return a list  of '(action, ticket id)' tuple
+        """
+        for action_match in re_message_parser.finditer(self.message):
+            action, tickets = action_match.groups()
+            for ticket_match in re_int.finditer(tickets):
+                for ticket_id in ticket_match.groups():
+                    yield(
+                        self.commit_action.get(str(action).lower(), self.default_action),
+                        int(ticket_id)
+                        )
+            
     @classmethod
     def get_commit_by_date(cls, env, start, stop, git_url=None):
         db = env.get_db_cnx()
@@ -131,8 +172,7 @@ class GitHubCommit(object):
                 commit.save()
                 yield commit
             except Exception, e:
-                raise GitHubCommitException('Could not save commit: %s' % str(e))
-    
+                raise GitHubCommitException('Could not save commit: %s' % str(e))    
     
     @classmethod
     def filter_fields(cls, fields):

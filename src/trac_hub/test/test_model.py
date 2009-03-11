@@ -220,11 +220,62 @@ class Test(unittest.TestCase):
         eq_('chris@ozmm.org',
             data['commits'][0]['author']['email'])
         
+    def test_parse_message(self):
+        commit = self._create_commit()[0]
         
+        commit.message = "fixed issue 1003"
+        result = commit.parse_message()
+        eq_(('fixes', 1003), result.next())
         
+        commit.message = "fixes issue 1"
+        result = commit.parse_message()
+        eq_(('fixes', 1), result.next())
         
+        commit.message = "fix issue 1 & 2"
+        result = commit.parse_message()
+        eq_(('fixes', 1), result.next())
+        eq_(('fixes', 2), result.next())
         
+        commit.message = "fixed issues 1003, 99 & 9"
+        result = commit.parse_message()
+        eq_(('fixes', 1003), result.next())
+        eq_(('fixes', 99), result.next())
+        eq_(('fixes', 9), result.next())
         
+        commit.message = "ref issue 1003"
+        result = commit.parse_message()
+        eq_(('ref', 1003), result.next())
+        
+        commit.message = "re issue 1003 & 99"
+        result = commit.parse_message()
+        eq_(('ref', 1003), result.next())
+        eq_(('ref', 99), result.next())
+        
+        commit.message = "ref #1003, #3 & #99"
+        result = commit.parse_message()
+        eq_(('ref', 1003), result.next())
+        eq_(('ref', 3), result.next())
+        eq_(('ref', 99), result.next())
+        
+        commit.message = "Fixed: #1, #2 & #3"
+        result = commit.parse_message()
+        eq_(('fixes', 1), result.next())
+        eq_(('fixes', 2), result.next())
+        eq_(('fixes', 3), result.next())
+        
+        commit.message = "Fixed: #1. Could be applied to 3 other issues: #11, #12 & #13"
+        result = commit.parse_message()
+        eq_(('fixes', 1), result.next())
+        eq_(('ref', 11), result.next())
+        eq_(('ref', 12), result.next())
+        eq_(('ref', 13), result.next())
+        
+    @raises(StopIteration)
+    def test_no_match(self):
+        commit = self._create_commit()[0]
+        commit.message = "fixed 1 typo"
+        result = commit.parse_message()
+        result.next()
 
 
 if __name__ == "__main__":
