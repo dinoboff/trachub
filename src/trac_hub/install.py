@@ -20,7 +20,8 @@ schema = [
         Column('name'),
         Column('email'),
         Column('message'),
-        Index(['time'])]
+        Index(['time']),
+        Index(['id'])]
     ]
 
 # Create tables

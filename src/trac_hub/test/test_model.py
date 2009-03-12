@@ -12,7 +12,7 @@ import unittest
 from trac.test import EnvironmentStub
 from nose.tools import eq_, ok_, raises
 
-from trac_hub.model import GitHubCommit
+from trac_hub.model import GitHubCommit, GitHubCommitNoRecord
 from trac_hub.install import TracHubSetup
 
 GIT_URL = 'http://github.com/defunkt/github/'
@@ -96,9 +96,16 @@ COMMITS = [
         'message': 'update pricing a tad',
         'id': 'de8251ff97ee194a289832576287d6f8ad74e3d0',
         'author': {'email': 'chris@ozmm.org', 'name': 'Chris Wanstrath'}
+        },
+    {
+        'url': 'http://github.com/dinoboff/github/commit/de8251ff97ee194a289832576287d6f8ad74e3d0',
+        'timestamp': '2008-02-16T14:36:34-08:00',
+        'message': 'update pricing a tad',
+        'id': 'de8251ff97ee194a289832576287d6f8ad74e3d0',
+        'author': {'email': 'dinoboff@hotmail.com', 'name': 'Damien Lebrun'}
         }]
 
-class Test(unittest.TestCase):
+class TestModel(unittest.TestCase):
 
 
     def setUp(self):
@@ -277,6 +284,27 @@ class Test(unittest.TestCase):
         result = commit.parse_message()
         result.next()
 
+    def test_get_original_commit(self):
+        commit, data = self._create_commit()
+        commit.save()
+        commit.url = 'http://example.com/example.git'
+        commit.time = commit.time + 5
+        commit.save()
+        commit.url = 'http://example.com/example2.git'
+        commit.time = commit.time + 5
+        commit.save()
+        original = commit.get_original_commit()
+        eq_(data['url'], original.url)
+    
+    @raises(GitHubCommitNoRecord)
+    def test_no_original(self):
+        commit = self._create_commit()[0]
+        commit.save()
+        commit.url = 'http://example.com/example.git'
+        commit.time = commit.time - 5
+        commit.save()
+        commit.get_original_commit()
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

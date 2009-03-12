@@ -117,7 +117,7 @@ class GitHubCommit(object):
             return self._author
     
     def save(self, db=None):
-        db, commit = self._get_db_for_write(db)
+        db, commit = self._get_db_for_write(db) # commit() == db.commit()
         cursor = db.cursor()
         sql = """INSERT INTO github_revisions
         (id, url, time, name, email, message)
@@ -136,7 +136,7 @@ class GitHubCommit(object):
         """
         Parse the commit message ticket relative information.
         
-        Return a list  of '(action, ticket id)' tuple
+        Return a list  of '(action, ticket id)' tuple.
         """
         for action_match in re_message_parser.finditer(self.message):
             action, tickets = action_match.groups()
@@ -146,6 +146,30 @@ class GitHubCommit(object):
                         self.commit_action.get(str(action).lower(), self.default_action),
                         int(ticket_id)
                         )
+
+    def get_original_commit(self):
+        """
+        Return the first same exact commit.
+        
+        Raise an exception if it is the first commit to be reported.
+        """
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        sql = """SELECT id, url, time, name, email, message
+        FROM github_revisions
+        WHERE url != %s
+          AND id = %s
+          AND time < %s
+        ORDER BY time ASC LIMIT 1"""
+        cursor.execute(sql, (self.url, self.id, self.time))
+        for id, url, time, name, email, message in cursor:
+            commit =  self.__class__(
+                self.env, git_url=self.git_url,
+                id=id, url=url, time=time, message=message)
+            commit.name = name
+            commit.email = email
+            return commit
+        raise GitHubCommitNoRecord('No original commit for %s' % self.id )
             
     @classmethod
     def get_commit_by_date(cls, env, start, stop, git_url=None):
