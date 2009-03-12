@@ -8,7 +8,7 @@ from datetime import datetime
 import unittest
 
 from trac.util.datefmt import to_timestamp, utc
-from trac.test import EnvironmentStub, Mock
+from trac.test import EnvironmentStub
 from trac.db.api import DatabaseManager
 from nose.tools import ok_, eq_, raises
 
@@ -17,7 +17,7 @@ from trac_hub.test.test_model import GIT_URL, COMMITS
 from trac_hub.model import GitHubCommit
 from trac_hub.timeline import GitHubEventProvider
 
-class Test(unittest.TestCase):
+class TestGitHubTimeLine(unittest.TestCase):
 
     def setUp(self):
         # setup environment

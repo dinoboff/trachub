@@ -11,10 +11,6 @@ from trac.config import Option
 from trac_hub.model import GitHubCommit, GitHubCommitException
 
 
-class GitHubPostError(Exception):
-    pass
-
-
 class IGitHubPostObserver(Interface):
     
     def process_commit(commit): #@NoSelf
