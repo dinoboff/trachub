@@ -21,9 +21,24 @@ To install this Trac Plugin:
         
         [components]
         trachub.* = enabled
+        trac.versioncontrol.* = disabled
+        
 
         [trachub]
-		github_url = http://github.com/yourusername/yourprojectname/
+        # url of your main project
+        # all of your commit url should start with it.
+        github_url = http://github.com/yourusername/yourprojectname/
+        
+        # when one of your commit fixed an issue,
+        # how should the ticket be updated.
+        # (empty mean not change)
+        status_for_ticket_update = 
+        resolution_for_ticket_update = fixed
+        
+        # Same settings,
+        # but for commit comming from cloned repository
+        status_for_clone_ticket_update =
+        resolution_for_clone_ticket_update = 
         
     5. Go to the Admin page for your project on GitHub. Then select the services tab.
         Under the: Post-Receive URLs
