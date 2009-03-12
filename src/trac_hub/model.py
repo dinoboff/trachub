@@ -65,6 +65,10 @@ class GitHubCommitException(Exception):
     pass
 
 
+class GitHubCommitNoRecord(Exception):
+    pass
+
+
 class GitHubCommit(object):
     
     default_action = 'ref'    
@@ -74,10 +78,10 @@ class GitHubCommit(object):
         're':   'ref',
         'ref.':  'ref',
         're.':   'ref',
-        'fix':  'fixes',
-        'fixe': 'fixes', # I know
-        'fixes':'fixes',
-        'fixed':'fixes'
+        'fix':  'fixed',
+        'fixe': 'fixed', # I know
+        'fixes':'fixed',
+        'fixed':'fixed'
         }
     
     def __init__(self, env, git_url=None, **kw):

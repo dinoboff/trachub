@@ -225,22 +225,22 @@ class Test(unittest.TestCase):
         
         commit.message = "fixed issue 1003"
         result = commit.parse_message()
-        eq_(('fixes', 1003), result.next())
+        eq_(('fixed', 1003), result.next())
         
         commit.message = "fixes issue 1"
         result = commit.parse_message()
-        eq_(('fixes', 1), result.next())
+        eq_(('fixed', 1), result.next())
         
         commit.message = "fix issue 1 & 2"
         result = commit.parse_message()
-        eq_(('fixes', 1), result.next())
-        eq_(('fixes', 2), result.next())
+        eq_(('fixed', 1), result.next())
+        eq_(('fixed', 2), result.next())
         
         commit.message = "fixed issues 1003, 99 & 9"
         result = commit.parse_message()
-        eq_(('fixes', 1003), result.next())
-        eq_(('fixes', 99), result.next())
-        eq_(('fixes', 9), result.next())
+        eq_(('fixed', 1003), result.next())
+        eq_(('fixed', 99), result.next())
+        eq_(('fixed', 9), result.next())
         
         commit.message = "ref issue 1003"
         result = commit.parse_message()
@@ -259,13 +259,13 @@ class Test(unittest.TestCase):
         
         commit.message = "Fixed: #1, #2 & #3"
         result = commit.parse_message()
-        eq_(('fixes', 1), result.next())
-        eq_(('fixes', 2), result.next())
-        eq_(('fixes', 3), result.next())
+        eq_(('fixed', 1), result.next())
+        eq_(('fixed', 2), result.next())
+        eq_(('fixed', 3), result.next())
         
         commit.message = "Fixed: #1. Could be applied to 3 other issues: #11, #12 & #13"
         result = commit.parse_message()
-        eq_(('fixes', 1), result.next())
+        eq_(('fixed', 1), result.next())
         eq_(('ref', 11), result.next())
         eq_(('ref', 12), result.next())
         eq_(('ref', 13), result.next())
