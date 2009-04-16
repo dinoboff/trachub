@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TracHub design &mdash; TracHub v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TracHub v0.1 documentation" href="index.html" />
+    <link rel="next" title="TraHub models" href="model.html" />
+    <link rel="prev" title="TracHub’s documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="model.html" title="TraHub models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="TracHub’s documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TracHub v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="trachub-design">
+<h1><a class="toc-backref" href="#id1">TracHub design<a class="headerlink" href="#trachub-design" title="Permalink to this headline">¶</a></a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Damien Lebrun</td>
+</tr>
+<tr class="field"><th class="field-name">Tags:</th><td class="field-body">design</td>
+</tr>
+<tr class="field"><th class="field-name">abstract:</th><td class="field-body">TracHub is plug-in to integrate GitHub with Trac.
+It tracks the activity of your repository and of its clone on GitHub.</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#trachub-design" id="id1">TracHub design</a><ul>
+<li><a class="reference internal" href="#use-cases" id="id2">Use cases</a></li>
+<li><a class="reference internal" href="#constraints" id="id3">Constraints</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>We were looking for an issue tracker that would allow users to notify
+the rest of the community of their coding activity easily,
+simple by push their work to a public repository.</p>
+<p>No traditional issue tracker supporting distributed version control
+systems seems have this feature (except maybe launchpad -
+but we didn&#8217;t fall in love with bzr or launchpad itself).</p>
+<p>This plug-in is not yet deployed so we might discover later
+that our requirements or implemention are naive.</p>
+<div class="section" id="use-cases">
+<h2><a class="toc-backref" href="#id2">Use cases<a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></a></h2>
+<ul class="simple">
+<li>Code browsing: redirect your GitHub repository.</li>
+<li>Commit activity: any commit on your repository or one of its clone should
+appear on the time line page. If a user mention an issue number in the commit message,
+the time line entry should be link to the issue.</li>
+<li>Patch submission alternative: if anybody posts of bug fix on its GitHub clone
+and mentions an issue in the commit message, a comment with a reference to the commit (with a link)
+is added to the issue</li>
+<li>Issue fixed: If the commit landing on the main repository mentions a fix to an issue,
+the issue should be closed with a reference to the commit.</li>
+</ul>
+</div>
+<div class="section" id="constraints">
+<h2><a class="toc-backref" href="#id3">Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></a></h2>
+<p>This plug-in can&#8217;t create a new version control controller conponent;
+it seems unrealistic to host a clone for every users wanting to contribute a bug fix,
+or to query each user repository via the GitHub API.</p>
+<p>Instead it will use GitHub web-hook and save any commit info it receives from the web-hook post in the Trac database.</p>
+<p>As a result, there will be dead link to commit that have disappeared (a clone have been removed or repository
+history have been rewritten.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">TracHub design</a><ul>
+<li><a class="reference external" href="#use-cases">Use cases</a></li>
+<li><a class="reference external" href="#constraints">Constraints</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="index.html"
+                                  title="previous chapter">TracHub&#8217;s documentation</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="model.html"
+                                  title="next chapter">TraHub models</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/design.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="model.html" title="TraHub models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="TracHub’s documentation"
+             >previous</a> |</li>
+        <li><a href="index.html">TracHub v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Damien Lebrun.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

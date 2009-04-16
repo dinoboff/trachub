@@ -1,0 +1,48 @@
+TracHub design 
+==============
+
+:Author: Damien Lebrun
+:Tags: design
+
+:abstract:
+
+    TracHub is plug-in to integrate GitHub with Trac.
+    It tracks the activity of your repository and of its clone on GitHub.
+
+.. contents ::
+
+We were looking for an issue tracker that would allow users to notify
+the rest of the community of their coding activity easily,
+simple by push their work to a public repository.
+
+No traditional issue tracker supporting distributed version control
+systems seems have this feature (except maybe launchpad -
+but we didn't fall in love with bzr or launchpad itself). 
+
+This plug-in is not yet deployed so we might discover later
+that our requirements or implemention are naive. 
+
+Use cases
+---------
+
+- Code browsing: redirect your GitHub repository.
+- Commit activity: any commit on your repository or one of its clone should
+  appear on the time line page. If a user mention an issue number in the commit message,
+  the time line entry should be link to the issue. 
+- Patch submission alternative: if anybody posts of bug fix on its GitHub clone
+  and mentions an issue in the commit message, a comment with a reference to the commit (with a link)
+  is added to the issue
+- Issue fixed: If the commit landing on the main repository mentions a fix to an issue,
+  the issue should be closed with a reference to the commit.
+  
+Constraints
+-----------
+
+This plug-in can't create a new version control controller conponent;
+it seems unrealistic to host a clone for every users wanting to contribute a bug fix,
+or to query each user repository via the GitHub API.
+
+Instead it will use GitHub web-hook and save any commit info it receives from the web-hook post in the Trac database.
+
+As a result, there will be dead link to commit that have disappeared (a clone have been removed or repository
+history have been rewritten.

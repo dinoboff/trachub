@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TraHub models &mdash; TracHub v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TracHub v0.1 documentation" href="index.html" />
+    <link rel="prev" title="TracHub design" href="design.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="TracHub design"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TracHub v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-trac_hub.model">
+<h1>TraHub models<a class="headerlink" href="#module-trac_hub.model" title="Permalink to this headline">¶</a></h1>
+<p>Models and utilities used to save commits sent to your project repository (and its clones)
+and reported to trac.</p>
+<dl class="class">
+<dt id="trac_hub.model.GitHubCommit">
+<em class="property">
+class </em><tt class="descclassname">trac_hub.model.</tt><tt class="descname">GitHubCommit</tt><big>(</big><em>env</em>, <em>git_url=None</em>, <em>id=None</em>, <em>url=None</em>, <em>time=None</em>, <em>author=None</em>, <em>message=None</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>author</em> &#8211; dict containing the name and email of the commit author</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.env">
+<tt class="descname">env</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.env" title="Permalink to this definition">¶</a></dt>
+<dd>Trac environment object (trac.env:Environment).</dd></dl>
+
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.git_url">
+<tt class="descname">git_url</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.git_url" title="Permalink to this definition">¶</a></dt>
+<dd>Url of the main GitHub repository.</dd></dl>
+
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.id">
+<tt class="descname">id</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.id" title="Permalink to this definition">¶</a></dt>
+<dd>Commit id (hash key).</dd></dl>
+
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.url">
+<tt class="descname">url</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.url" title="Permalink to this definition">¶</a></dt>
+<dd>Commit&#8217;s GitHub url.</dd></dl>
+
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.time">
+<tt class="descname">time</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.time" title="Permalink to this definition">¶</a></dt>
+<dd>Commit push time (more exactly, when Trac have been notified of the commit)</dd></dl>
+
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.message">
+<tt class="descname">message</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.message" title="Permalink to this definition">¶</a></dt>
+<dd>Commit message</dd></dl>
+
+<dl class="attribute">
+<dt id="trac_hub.model.GitHubCommit.author">
+<tt class="descname">author</tt><a class="headerlink" href="#trac_hub.model.GitHubCommit.author" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body">Boolean. True if it is a commit to a clone repository.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="trac_hub.model.GitHubCommit.create_from_json">
+<em class="property">
+classmethod </em><tt class="descname">create_from_json</tt><big>(</big><em>env</em>, <em>json</em>, <em>git_url=''</em>, <em>db=None</em><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit.create_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save commit from GitHub json payload.</p>
+<p>Raise an exception if json if not valid json string,
+or if it could not save a commit.</p>
+<p>Note: it doesn&#8217;t roll back partial payload saved.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="trac_hub.model.GitHubCommit.get_commit_by_date">
+<em class="property">
+classmethod </em><tt class="descname">get_commit_by_date</tt><big>(</big><em>env</em>, <em>start</em>, <em>stop</em>, <em>git_url=None</em><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit.get_commit_by_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the commits on a specific range of date.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><em>env</em> &#8211; Trac environment</li>
+<li><em>start</em> &#8211; time stamp</li>
+<li><em>stop</em> &#8211; time stamp</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Git_url:</th><td class="field-body"><p class="first">url of the main repository.</p>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list (generator) of commit</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trac_hub.model.GitHubCommit.get_original_commit">
+<tt class="descname">get_original_commit</tt><big>(</big><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit.get_original_commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the first same exact commit.</p>
+<p>Two commits are equals if the have the same id and identical if they have the same url.
+I assume a commit merged in an other repository will have the same id or hash key; 
+id, is miss leading.</p>
+<p>Raise a GitHubCommitNoRecord exception if it is the first commit to be reported.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trac_hub.model.GitHubCommit.is_clone">
+<tt class="descname">is_clone</tt><big>(</big><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit.is_clone" title="Permalink to this definition">¶</a></dt>
+<dd>Test if the commit comes from the main repository or a clone.</dd></dl>
+
+<dl class="method">
+<dt id="trac_hub.model.GitHubCommit.parse_message">
+<tt class="descname">parse_message</tt><big>(</big><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit.parse_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the commit message ticket action.</p>
+<p>Accept to type of action: Ref and fixed. To reference a ticket use &#8220;issue 1&#8221; or &#8220;#1&#8221;.
+You can reference more than one ticket, like &#8220;Ref: #1, #2 and &amp;3&#8221;.</p>
+<p>Reference to ticket should be on the first line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Return type:</th><td class="field-body">a list (generator) of &#8216;(action, ticket id)&#8217; tuple.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trac_hub.model.GitHubCommit.save">
+<tt class="descname">save</tt><big>(</big><em>db=None</em><big>)</big><a class="headerlink" href="#trac_hub.model.GitHubCommit.save" title="Permalink to this definition">¶</a></dt>
+<dd>Save the commit.</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="trac_hub.model.GitHubCommitException">
+<em class="property">
+exception </em><tt class="descclassname">trac_hub.model.</tt><tt class="descname">GitHubCommitException</tt><a class="headerlink" href="#trac_hub.model.GitHubCommitException" title="Permalink to this definition">¶</a></dt>
+<dd>Generic exception</dd></dl>
+
+<dl class="exception">
+<dt id="trac_hub.model.GitHubCommitNoRecord">
+<em class="property">
+exception </em><tt class="descclassname">trac_hub.model.</tt><tt class="descname">GitHubCommitNoRecord</tt><a class="headerlink" href="#trac_hub.model.GitHubCommitNoRecord" title="Permalink to this definition">¶</a></dt>
+<dd>Raise when a commit cannot be found</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="design.html"
+                                  title="previous chapter">TracHub design</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/model.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="TracHub design"
+             >previous</a> |</li>
+        <li><a href="index.html">TracHub v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Damien Lebrun.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+    </div>
+  </body>
+</html>

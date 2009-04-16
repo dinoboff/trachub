@@ -1,0 +1,6 @@
+=============
+TraHub models 
+=============
+
+.. automodule:: trac_hub.model
+	:members:
